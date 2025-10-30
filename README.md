@@ -37,8 +37,9 @@
 ### Documentation
 
 **Architecture Documentation**:
-1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - 24-hour implementation architecture
-2. **[PROPOSED_STRUCTURE.md](PROPOSED_STRUCTURE.md)** - Simplified MVP directory structure
+1. **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - 24-hour implementation architecture
+2. **[PROPOSED_STRUCTURE.md](docs/PROPOSED_STRUCTURE.md)** - Simplified MVP directory structure
+3. **[QUICK_START.md](docs/QUICK_START.md)** - Quick start guide
 
 ---
 
@@ -135,38 +136,51 @@
 
 ---
 
-## 📁 MVP Directory Structure (24-Hour Build)
+## 📁 Repository Structure
 
 ```
 Phantom-shroud/
-├── core/                      # Core security modules (simplified)
-│   ├── network_inspector.py   # Scapy-based packet capture
-│   ├── dpi_engine.py          # Basic protocol analysis
-│   ├── anomaly_detector.py    # Rule-based + simple ML
-│   ├── vpn_manager.py         # OpenVPN controller
-│   ├── honeypot.py            # Basic honeypot services
-│   └── threat_analyzer.py     # Event correlation
-├── models/                    # Pre-trained ML models
-│   └── isolation_forest.pkl    # Pre-trained model
-├── api/                       # Flask backend (lightweight)
-│   ├── app.py                 # Main API server
-│   └── routes.py              # API endpoints
-├── dashboard/                 # React admin dashboard
+├── backend/                   # Python backend application
+│   ├── api/                   # Flask API endpoints
+│   │   ├── app.py             # Main API server
+│   │   └── routes.py          # API routes
+│   ├── core/                  # Core security modules
+│   │   ├── network_inspector.py   # Packet capture
+│   │   ├── dpi_engine.py          # Protocol analysis
+│   │   ├── anomaly_detector.py    # Threat detection
+│   │   ├── vpn_manager.py         # VPN controller
+│   │   ├── honeypot.py            # Honeypot services
+│   │   └── threat_analyzer.py     # Event correlation
+│   ├── config/                # Configuration files
+│   │   ├── config.yaml        # System config
+│   │   └── vpn_profiles/      # VPN configs
+│   ├── utils/                 # Shared utilities
+│   ├── tests/                 # Unit tests
+│   ├── data/                  # Runtime data
+│   ├── logs/                  # Application logs
+│   ├── models/                # ML models
+│   ├── scripts/               # Helper scripts
+│   ├── requirements.txt       # Python dependencies
+│   └── setup.sh               # Backend setup script
+├── frontend/                  # React admin dashboard
 │   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── utils/             # Frontend utilities
 │   │   ├── App.jsx            # Main component
-│   │   ├── components/        # UI components
-│   │   └── utils/             # Helper functions
-│   └── package.json
-├── utils/                     # Shared utilities
-│   ├── logger.py
-│   └── network_utils.py
-├── config/                    # Configuration
-│   ├── config.yaml            # System config
-│   └── vpn_profiles/          # VPN configs
-└── requirements.txt           # Python dependencies
+│   │   └── main.jsx           # Entry point
+│   ├── public/                # Static assets
+│   ├── package.json           # Node dependencies
+│   └── vite.config.js         # Vite config
+├── docs/                      # Documentation
+│   ├── ARCHITECTURE.md        # Architecture details
+│   ├── PROPOSED_STRUCTURE.md  # Project structure
+│   └── QUICK_START.md         # Quick start guide
+├── README.md                  # This file
+├── LICENSE                    # License information
+└── .gitignore                 # Git ignore rules
 ```
 
-See [PROPOSED_STRUCTURE.md](PROPOSED_STRUCTURE.md) for detailed structure.
+See [PROPOSED_STRUCTURE.md](docs/PROPOSED_STRUCTURE.md) for detailed structure.
 
 ---
 
