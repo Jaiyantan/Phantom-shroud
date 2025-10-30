@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dashboard/dist/
+dashboard/.vite/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/*.log
+*.log
+
+# Data
+data/*.json
+models/*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config (sensitive)
+config/vpn_profiles/*.ovpn
+!config/vpn_profiles/default.ovpn
+
+# Environment
+.env
+.env.local

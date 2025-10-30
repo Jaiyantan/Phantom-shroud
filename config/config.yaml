@@ -1,0 +1,72 @@
+# Phantom-shroud Configuration
+# 24-Hour Hackathon MVP
+
+# Network Inspection
+network:
+  interface: "auto"  # Auto-detect or specify (e.g., eth0, wlan0)
+  capture_filter: ""  # BPF filter (empty = capture all)
+  packet_limit: 0  # 0 = unlimited
+
+# DPI Engine
+dpi:
+  enabled: true
+  protocols:
+    - HTTP
+    - HTTPS
+    - DNS
+    - SSH
+
+# Anomaly Detection
+detection:
+  enabled: true
+  rule_based: true
+  ml_based: true
+  model_path: "models/isolation_forest.pkl"
+  thresholds:
+    port_scan: 10  # connections per minute
+    arp_spoof: true
+    dns_hijack: true
+
+# VPN Manager
+vpn:
+  enabled: true
+  auto_trigger: true  # Auto-connect on threat
+  config_path: "config/vpn_profiles/default.ovpn"
+  kill_switch: true
+  reconnect_attempts: 3
+
+# Honeypot
+honeypot:
+  enabled: true
+  services:
+    ssh:
+      port: 2222
+      enabled: true
+    http:
+      port: 8080
+      enabled: true
+
+# Threat Analyzer
+threat_analysis:
+  enabled: true
+  correlation_window: 300  # seconds (5 minutes)
+  incident_threshold: 3  # events to create incident
+
+# API Server
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true
+  cors_enabled: true
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "logs/events.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+
+# Data Storage
+storage:
+  threats_log: "data/threats.json"
+  honeypot_log: "data/honeypot_logs.json"
