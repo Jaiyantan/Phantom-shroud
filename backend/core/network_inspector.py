@@ -1,131 +1,259 @@
 """
 Network Inspector Module
-Hours 0-3 Implementation
+Phase 1 - Enhanced Implementation
 
-MVP Scope:
-- Basic packet capture using Scapy
-- Simple flow tracking (src/dst IP, ports)
-- Single interface monitoring
-- Target: 1,000+ packets/second
+Provides comprehensive network inspection capabilities:
+- Multi-interface packet capture
+- Advanced traffic parsing
+- Flow tracking and analysis
+- Real-time statistics
 """
 
-from scapy.all import sniff, IP, TCP, UDP
-from collections import defaultdict
-import time
 import logging
+import threading
+import time
+from typing import Optional, Dict, List
+from collections import defaultdict
+from datetime import datetime
+
+from .network.capture import PacketCapture, PacketCaptureManager
+from .network.parser import TrafficParser
+from .network.interface import InterfaceManager
+from .network.flow_tracker import FlowTracker
 
 logger = logging.getLogger(__name__)
 
 
 class NetworkInspector:
     """
-    Basic network packet capture and flow tracking.
-    Simplified for 24-hour MVP.
+    Enhanced Network Inspector with comprehensive monitoring capabilities
     """
     
-    def __init__(self, interface=None):
+    def __init__(self, interface: Optional[str] = None, auto_start: bool = False):
         """
         Initialize Network Inspector
         
         Args:
             interface: Network interface to monitor (auto-detect if None)
+            auto_start: Whether to start capture automatically
         """
+        # Initialize components
+        self.interface_manager = InterfaceManager()
         self.interface = interface or self.detect_interface()
-        self.flows = defaultdict(int)
-        self.packet_count = 0
+        
+        # Initialize capture, parser, and flow tracker
+        self.capture = PacketCapture(interface=self.interface)
+        self.parser = TrafficParser()
+        self.flow_tracker = FlowTracker(timeout=300)
+        
+        # Statistics
         self.start_time = None
         self.is_running = False
+        self.last_stats_time = datetime.now()
+        
+        # Protocol statistics
+        self.protocol_stats = defaultdict(int)
+        
+        # Cleanup thread
+        self._cleanup_thread = None
+        self._stop_cleanup = threading.Event()
+        
         logger.info(f"NetworkInspector initialized on interface: {self.interface}")
+        
+        # Register packet processing callback
+        self.capture.register_callback(self._process_packet)
+        
+        if auto_start:
+            self.start()
     
-    def detect_interface(self):
+    def detect_interface(self) -> str:
         """
         Auto-detect default network interface
         
         Returns:
             str: Interface name
         """
-        # TODO: Implement interface detection
-        # Placeholder: return first available interface
-        return "eth0"
-    
-    def start_capture(self, packet_callback=None):
-        """
-        Start capturing packets
+        default_iface = self.interface_manager.get_default_interface()
         
-        Args:
-            packet_callback: Optional callback function for each packet
-        """
-        logger.info("Starting packet capture...")
-        self.is_running = True
-        self.start_time = time.time()
+        if not default_iface:
+            # Fallback to first monitorable interface
+            monitorable = self.interface_manager.get_monitorable_interfaces()
+            default_iface = monitorable[0] if monitorable else 'eth0'
         
-        try:
-            # TODO: Implement actual packet capture
-            # sniff(iface=self.interface, prn=self.process_packet, store=False)
-            pass
-        except Exception as e:
-            logger.error(f"Capture error: {e}")
-            self.is_running = False
+        logger.info(f"Auto-detected interface: {default_iface}")
+        return default_iface
     
-    def process_packet(self, packet):
+    def _process_packet(self, packet):
         """
-        Process captured packet
+        Internal packet processing callback
         
         Args:
             packet: Scapy packet object
         """
-        # TODO: Implement packet processing
-        self.packet_count += 1
-        
-        # Extract flow information
-        if IP in packet:
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
-            flow_id = (src_ip, dst_ip)
-            self.flows[flow_id] += 1
-        
-        return packet
+        try:
+            # Parse packet
+            parsed = self.parser.parse_packet(packet)
+            
+            if parsed:
+                # Update protocol statistics
+                for protocol in parsed.get('protocols', []):
+                    self.protocol_stats[protocol] += 1
+                
+                # Update flow tracker
+                self.flow_tracker.process_packet(parsed)
+                
+        except Exception as e:
+            logger.debug(f"Error processing packet: {e}")
     
-    def stop_capture(self):
-        """Stop packet capture"""
+    def start(self):
+        """Start network inspection"""
+        if self.is_running:
+            logger.warning("Network inspection is already running")
+            return
+        
+        logger.info("Starting network inspection...")
+        self.start_time = datetime.now()
+        self.is_running = True
+        
+        # Start packet capture
+        self.capture.start()
+        
+        # Start cleanup thread for expired flows
+        self._start_cleanup_thread()
+        
+        logger.info("Network inspection started successfully")
+    
+    def stop(self):
+        """Stop network inspection"""
+        if not self.is_running:
+            logger.warning("Network inspection is not running")
+            return
+        
+        logger.info("Stopping network inspection...")
         self.is_running = False
-        logger.info("Packet capture stopped")
+        
+        # Stop packet capture
+        self.capture.stop()
+        
+        # Stop cleanup thread
+        self._stop_cleanup.set()
+        if self._cleanup_thread:
+            self._cleanup_thread.join(timeout=5)
+        
+        logger.info("Network inspection stopped")
     
-    def get_stats(self):
+    def _start_cleanup_thread(self):
+        """Start background thread for flow cleanup"""
+        self._stop_cleanup.clear()
+        
+        def cleanup_loop():
+            while not self._stop_cleanup.is_set():
+                time.sleep(60)  # Cleanup every minute
+                if self.is_running:
+                    self.flow_tracker.cleanup_expired_flows()
+        
+        self._cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
+        self._cleanup_thread.start()
+    
+    def get_stats(self) -> Dict:
         """
-        Get current network statistics
+        Get comprehensive network statistics
         
         Returns:
-            dict: Network statistics
+            Dictionary with network statistics
         """
-        elapsed = time.time() - self.start_time if self.start_time else 0
-        pps = self.packet_count / elapsed if elapsed > 0 else 0
+        capture_stats = self.capture.get_statistics()
+        flow_stats = self.flow_tracker.get_statistics()
+        
+        elapsed = (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
+        pps = flow_stats['total_packets'] / elapsed if elapsed > 0 else 0
         
         return {
-            'packet_count': self.packet_count,
-            'flow_count': len(self.flows),
-            'packets_per_second': round(pps, 2),
-            'elapsed_time': round(elapsed, 2),
+            'is_running': self.is_running,
             'interface': self.interface,
-            'is_running': self.is_running
+            'elapsed_time': round(elapsed, 2),
+            'capture': capture_stats,
+            'flows': flow_stats,
+            'protocols': dict(self.protocol_stats),
+            'packets_per_second': round(pps, 2)
         }
     
-    def get_top_flows(self, limit=10):
+    def get_active_flows(self, limit: Optional[int] = 50) -> List[Dict]:
         """
-        Get top flows by packet count
+        Get list of active network flows
         
         Args:
-            limit: Number of flows to return
+            limit: Maximum number of flows to return
             
         Returns:
-            list: Top flows
+            List of flow dictionaries
         """
-        sorted_flows = sorted(
-            self.flows.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        return sorted_flows[:limit]
+        return self.flow_tracker.get_active_flows(limit=limit)
+    
+    def get_top_talkers(self, limit: int = 10, by: str = 'bytes') -> List[Dict]:
+        """
+        Get top talkers (most active flows)
+        
+        Args:
+            limit: Number of top flows to return
+            by: Sort by 'bytes' or 'packets'
+            
+        Returns:
+            List of top flow dictionaries
+        """
+        return self.flow_tracker.get_top_talkers(limit=limit, by=by)
+    
+    def get_flows_by_ip(self, ip_address: str) -> List[Dict]:
+        """
+        Get all flows involving a specific IP address
+        
+        Args:
+            ip_address: IP address to search for
+            
+        Returns:
+            List of flow dictionaries
+        """
+        return self.flow_tracker.get_flows_by_ip(ip_address)
+    
+    def get_protocol_distribution(self) -> Dict[str, int]:
+        """
+        Get distribution of protocols
+        
+        Returns:
+            Dictionary with protocol counts
+        """
+        return self.flow_tracker.get_protocol_distribution()
+    
+    def get_interfaces(self) -> List[str]:
+        """
+        Get list of available network interfaces
+        
+        Returns:
+            List of interface names
+        """
+        return self.interface_manager.list_interfaces()
+    
+    def get_interface_info(self, iface_name: str) -> Optional[Dict]:
+        """
+        Get detailed information about an interface
+        
+        Args:
+            iface_name: Name of the interface
+            
+        Returns:
+            Interface information dictionary or None
+        """
+        return self.interface_manager.get_interface_info(iface_name)
+    
+    def set_capture_filter(self, bpf_filter: str):
+        """
+        Set BPF filter for packet capture
+        
+        Args:
+            bpf_filter: BPF filter string (e.g., "tcp port 80")
+        """
+        self.capture.set_filter(bpf_filter)
+        logger.info(f"Capture filter set: {bpf_filter}")
 
 
 if __name__ == "__main__":

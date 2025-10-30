@@ -24,6 +24,8 @@ backend/
 ```bash
 cd backend
 pip install -r requirements.txt
+# Optional (for ML features in later phases):
+# pip install -r requirements-ml.txt
 ./setup.sh
 ```
 
@@ -44,3 +46,7 @@ pytest tests/
 ## Documentation
 
 See the [docs](../docs/) directory for detailed architecture and implementation guides.
+
+Note on Python versions:
+- Recommended: Python 3.10–3.12 for best third-party library compatibility
+- Python 3.14: Base (Phase 1) works. ML dependencies (scikit-learn) may not have wheels yet; install them later or use Python 3.10–3.12.
