@@ -1,230 +1,78 @@
-# Phantom-shroud: Privacy Guard for Public Wi-Fi Networks
+# Phantom-shroud
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Hackathon](https://img.shields.io/badge/hackathon-24h-orange.svg)]()
-[![Status](https://img.shields.io/badge/status-MVP%20Development-yellow.svg)]()
+Public Wi-Fi protection built in 24 hours. Detects MITM attacks, activates VPN automatically, and deploys honeypots to track attackers.
 
-## 🛡️ Overview
+## What it does
 
-**Phantom-shroud** is a security solution designed and built within a **24-hour hackathon** to protect users on public Wi-Fi networks. The system detects insecure networks, monitors for man-in-the-middle (MITM) attacks, and provides automated protection through VPN encryption. Phantom-shroud delivers an MVP implementation with core defence mechanisms: network inspection, threat detection, VPN tunneling, deception capabilities, and a real-time monitoring dashboard.
+Monitors network traffic in real-time. When it spots something suspicious—ARP spoofing, DNS hijacking, certificate tampering—it locks down your connection through an encrypted VPN tunnel.
 
-### Key Capabilities (24-Hour MVP)
+**Core features:**
+- Deep packet inspection with ML-based threat classification
+- Automated VPN failover on attack detection
+- Honeypot deception layer for attacker intelligence
+- Live monitoring dashboard
 
-- **🔍 Network Inspection**: Real-time packet capture and basic flow tracking
-- **🔬 Deep Packet Inspection (DPI)**: Essential protocol analysis and feature extraction
-- **🤖 Anomaly Detection**: Rule-based + lightweight ML threat detection
-- **🔐 VPN Tunneling**: Automatic encrypted tunnel with OpenVPN
-- **🎭 Deception Layer**: Basic honeypot implementation
-- **🧠 Threat Analysis**: Simple correlation and threat classification
-- **📊 Admin Dashboard**: Real-time monitoring and alert interface
+## Stack
 
----
+**Backend:** Python (Scapy, Flask, BERT/DistilBERT)  
+**Frontend:** React + Vite  
+**Protection:** OpenVPN
 
-## ⏱️ 24-Hour Hackathon Challenge
+## Quick start
 
-**Time Constraint**: Built from scratch in 24 hours  
-**Approach**: MVP (Minimum Viable Product) with core defence mechanisms  
-**Focus**: Demonstrable protection, functional prototypes, rapid iteration
+```bash
+# Backend
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python api/app.py
 
-### Hackathon Timeline
-
-- **Hours 0-6**: Core infrastructure, network inspection, DPI engine
-- **Hours 6-12**: Anomaly detection, VPN integration, deception layer
-- **Hours 12-18**: API backend, threat correlation, basic causal analysis
-- **Hours 18-24**: Admin dashboard, integration, testing, demo prep
-
-### Documentation
-
-**Architecture Documentation**:
-1. **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - 24-hour implementation architecture
-2. **[PROPOSED_STRUCTURE.md](docs/PROPOSED_STRUCTURE.md)** - Simplified MVP directory structure
-3. **[QUICK_START.md](docs/QUICK_START.md)** - Quick start guide
-
----
-
-## 🏗️ Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Phantom-shroud                         │
-│                                                          │
-│  ┌──────────────┐    ┌──────────────┐                  │
-│  │   Network    │───▶│     DPI      │                  │
-│  │  Inspector   │    │   Engine     │                  │
-│  └──────────────┘    └──────────────┘                  │
-│                             │                            │
-│                             ▼                            │
-│                  ┌──────────────────┐                   │
-│                  │    Anomaly       │                   │
-│                  │    Detector      │                   │
-│                  └──────────────────┘                   │
-│                             │                            │
-│          ┌─────────────────┼─────────────────┐         │
-│          ▼                  ▼                 ▼         │
-│   ┌──────────┐      ┌──────────┐     ┌──────────┐     │
-│   │   VPN    │      │Deception │     │  Causal  │     │
-│   │ Manager  │      │   Loop   │     │Inference │     │
-│   └──────────┘      └──────────┘     └──────────┘     │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │              API Layer (Flask)                    │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-              ┌───────────────────────┐
-              │   Admin Dashboard     │
-              │   (React + Vite)      │
-              └───────────────────────┘
+# Frontend
+cd frontend
+npm install && npm run dev
 ```
 
----
+Dashboard: `http://localhost:5173`
 
-## 🎯 Defence-Side Components (MVP Focus)
+## ML-based detection (optional)
 
-### 1. Network Inspection System (Hours 0-3)
-**MVP Scope**:
-- Basic packet capture using Scapy
-- Simple flow tracking (src/dst IP, ports)
-- Single interface monitoring
-- Target: 1,000+ packets/second
+Install for advanced threat analysis:
+```bash
+pip install -r backend/requirements-ml.txt
+```
 
-### 2. Deep Packet Inspection (Hours 3-6)
-**MVP Scope**:
-- Protocol identification (HTTP, HTTPS, DNS)
-- Basic SSL/TLS validation
-- Essential feature extraction (~20 features)
-- Payload size and frequency analysis
+Detects 8 threat types: Backdoor, Bot, DDoS, DoS, Exploits, Shellcode, SQL Injection, XSS.  
+Works with GPU acceleration or falls back to CPU. System runs fine without it.
 
-### 3. Anomaly Detection (Hours 6-10) ✅ **ENHANCED**
-**MVP Scope**:
-- Rule-based detection (ARP spoofing, DNS hijacking, port scanning)
-- TTL baseline analysis for proxy detection
-- Network latency monitoring and spike detection
-- Duplicate IP/MAC detection
-- Simple statistical anomaly detection (Isolation Forest)
-- Signature matching for known attacks
-- Real-time alerting
-- Target: <2s detection latency
-
-**Enhanced Features (Phase 2 & 3)**:
-- ✅ Advanced ARP spoofing detection with duplicate tracking
-- ✅ TTL anomaly detection (MITM proxy indicators)
-- ✅ Latency spike detection
-- ✅ Port scanning pattern recognition
-- ✅ DNS hijacking with known-good DNS tracking
-- ✅ Per-IP network metrics tracking
-- ✅ Comprehensive statistics and suspicious IP reporting
-
-**ML Enhancement (Phase 4)**: ✅ **NEW**
-- ✅ ML-based packet classification with BERT/DistilBERT
-- ✅ 8 threat categories: Backdoor, Bot, DDoS, DoS, Exploits, Shellcode, SQL Injection, XSS
-- ✅ Bidirectional flow tracking for asymmetric attack detection
-- ✅ Async batch inference (16 packets/batch, GPU/CPU auto-detection)
-- ✅ Result caching with 60s TTL for performance
-- ✅ Queue-based processing with overflow protection
-- ✅ Background worker threads for non-blocking analysis
-- ✅ JSONL logging for inference auditing
-
-### 4. VPN Tunneling (Hours 10-12)
-**MVP Scope**:
-- OpenVPN integration
-- Manual and automatic connection triggers
-- Basic kill switch (iptables rules)
-- Connection status monitoring
-
-### 5. Deception Layer (Hours 12-14)
-**MVP Scope**:
-- Basic honeypot (SSH, HTTP)
-- Connection logging
-- Simple attacker IP tracking
-- Alert generation on interaction
-
-### 6. Threat Analysis (Hours 14-16)
-**MVP Scope**:
-- Event correlation by time/IP
-- Simple attack chain identification
-- Threat severity scoring
-- Basic incident timeline
-
-### 7. Admin Dashboard (Hours 16-24) ✅ **ENHANCED**
-**MVP Scope**:
-- Real-time network status display
-- Live threat feed
-- VPN control interface
-- Alert notifications
-- Basic statistics and charts
-
-**Phase 5 Enhancement**: ✅ **NEWEST**
-- ✅ **ML Analytics Dashboard**: Comprehensive ML statistics with animated counters
-- ✅ **Threat Visualization**: Interactive Doughnut/Bar charts with Chart.js
-- ✅ **Flow Monitor**: Real-time bidirectional flow tracking with filtering
-- ✅ **ML Status Widget**: Model configuration and GPU/CPU indicators
-- ✅ **Dark Cyber Theme**: Neon-accented color palette with glass morphism
-- ✅ **Smooth Animations**: Fade-in, slide-up, counter animations (GPU-accelerated)
-- ✅ **Tab Navigation**: Overview and ML Analytics views
-- ✅ **Custom React Hooks**: Auto-refreshing API integration
-- ✅ **Graceful Degradation**: Works without ML packages installed
-
----
-
-## 📁 Repository Structure
+## Architecture
 
 ```
-Phantom-shroud/
-├── backend/                   # Python backend application
-│   ├── api/                   # Flask API endpoints
-│   │   ├── app.py             # Main API server
-│   │   └── routes.py          # API routes
-│   ├── core/                  # Core security modules
-│   │   ├── network/           # Network monitoring
-│   │   │   ├── arp_monitor.py         # ARP spoofing detection ✨
-│   │   │   ├── tcp_monitor.py         # TCP metrics (MITM) ✨
-│   │   │   └── portal_detector.py     # Portal fingerprinting ✨
-│   │   ├── security/          # Security validation
-│   │   │   └── cert_validator.py      # Certificate pinning ✨
-│   │   ├── dpi/               # Deep packet inspection
-│   │   │   ├── protocols/
-│   │   │   │   ├── tls.py             # JA3 fingerprinting ✨
-│   │   │   │   ├── http.py
-│   │   │   │   └── dns.py
-│   │   │   ├── ml_analyzer.py         # ML-based packet classification 🧠
-│   │   │   └── manager.py
-│   │   ├── network_inspector.py   # Packet capture
-│   │   ├── dpi_engine.py          # Protocol analysis
-│   │   ├── anomaly_detector.py    # Enhanced threat detection ✨
-│   │   ├── vpn_manager.py         # VPN controller
-│   │   ├── honeypot.py            # Enhanced honeypot services ✨
-│   │   ├── wifi_analyzer.py       # WiFi security analysis ✨
-│   │   └── threat_analyzer.py     # Event correlation
-│   ├── config/                # Configuration files
-│   │   ├── config.yaml        # System config
-│   │   └── vpn_profiles/      # VPN configs
-│   ├── utils/                 # Shared utilities
-│   ├── tests/                 # Unit tests
-│   ├── data/                  # Runtime data
-│   ├── logs/                  # Application logs
-│   ├── models/                # ML models
-│   ├── scripts/               # Helper scripts
-│   ├── requirements.txt       # Python dependencies
-│   └── setup.sh               # Backend setup script
-├── frontend/                  # React admin dashboard
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   ├── utils/             # Frontend utilities
-│   │   ├── App.jsx            # Main component
-│   │   └── main.jsx           # Entry point
-│   ├── public/                # Static assets
-│   ├── package.json           # Node dependencies
-│   └── vite.config.js         # Vite config
-├── docs/                      # Documentation
-│   ├── ARCHITECTURE.md        # Architecture details
-│   ├── PROPOSED_STRUCTURE.md  # Project structure
-│   └── QUICK_START.md         # Quick start guide
-├── README.md                  # This file
-├── LICENSE                    # License information
-└── .gitignore                 # Git ignore rules
+Network Inspector → DPI Engine → Anomaly Detector
+                                      ↓
+                        VPN Manager + Honeypot + Threat Analyzer
+                                      ↓
+                                  Flask API
+                                      ↓
+                              React Dashboard
+```
+
+## Security modules
+
+- **ARP Monitor:** Detects duplicate IPs and gateway spoofing
+- **TCP Monitor:** Flags TTL variance and window anomalies (MITM proxies)
+- **Cert Validator:** Certificate pinning with violation tracking
+- **Portal Detector:** Identifies rogue captive portals
+- **TLS Analyzer:** JA3 fingerprinting against known malicious signatures
+- **WiFi Analyzer:** Encryption auditing and rogue AP detection
+
+## Team
+
+Jaiyantan S, Thirumurugan K, Kabelan G K, Ranen Joseph Solomon
+
+Built for CICADA'25 Hackathon
+
+MIT License
+
 ```
 
 See [PROPOSED_STRUCTURE.md](docs/PROPOSED_STRUCTURE.md) for detailed structure.
