@@ -601,6 +601,131 @@ def security_health():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# ML DPI ANALYZER ENDPOINTS
+# ============================================================================
+
+@security_bp.route('/ml/stats', methods=['GET'])
+def get_ml_stats():
+    """
+    Get ML-based DPI analyzer statistics
+    
+    Returns:
+        JSON with ML analysis stats, queue size, cache, flows
+    """
+    try:
+        from flask import current_app
+        ml_analyzer = current_app.config.get('ML_ANALYZER')
+        
+        if ml_analyzer and ml_analyzer.enabled:
+            stats = ml_analyzer.get_stats()
+            return jsonify(stats)
+        else:
+            return jsonify({
+                'enabled': False,
+                'error': 'ML analyzer not initialized or ML packages not installed'
+            }), 503
+    except Exception as e:
+        logger.error(f"ML stats error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@security_bp.route('/ml/status', methods=['GET'])
+def get_ml_status():
+    """
+    Get ML analyzer status and configuration
+    
+    Returns:
+        JSON with ML status, model info, device
+    """
+    try:
+        from flask import current_app
+        ml_analyzer = current_app.config.get('ML_ANALYZER')
+        
+        if ml_analyzer:
+            return jsonify({
+                'enabled': ml_analyzer.enabled,
+                'model_path': ml_analyzer.model_path if ml_analyzer.enabled else None,
+                'device': str(ml_analyzer.device) if ml_analyzer.enabled else None,
+                'batch_size': ml_analyzer.batch_size,
+                'confidence_threshold': ml_analyzer.confidence_threshold,
+                'running': ml_analyzer.running if ml_analyzer.enabled else False
+            })
+        else:
+            return jsonify({
+                'enabled': False,
+                'error': 'ML analyzer not initialized'
+            }), 503
+    except Exception as e:
+        logger.error(f"ML status error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@security_bp.route('/ml/flows', methods=['GET'])
+def get_ml_flows():
+    """
+    Get active flow statistics from ML analyzer
+    
+    Query params:
+        limit: Number of flows to return
+    
+    Returns:
+        JSON with active flows and statistics
+    """
+    try:
+        from flask import current_app
+        ml_analyzer = current_app.config.get('ML_ANALYZER')
+        
+        if ml_analyzer and ml_analyzer.enabled:
+            flow_count = ml_analyzer.flow_tracker.get_active_flow_count()
+            return jsonify({
+                'active_flows': flow_count,
+                'max_age': ml_analyzer.flow_tracker.max_age
+            })
+        else:
+            return jsonify({'error': 'ML analyzer not available'}), 503
+    except Exception as e:
+        logger.error(f"ML flows error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@security_bp.route('/ml/threats', methods=['GET'])
+def get_ml_threats():
+    """
+    Get detected threats from ML analyzer
+    
+    Query params:
+        limit: Number of threats to return
+        category: Filter by threat category
+    
+    Returns:
+        JSON with threat detections
+    """
+    try:
+        from flask import current_app
+        ml_analyzer = current_app.config.get('ML_ANALYZER')
+        
+        limit = request.args.get('limit', 50, type=int)
+        category = request.args.get('category', None)
+        
+        if ml_analyzer and ml_analyzer.enabled:
+            stats = ml_analyzer.get_stats()
+            return jsonify({
+                'threats_detected': stats.get('threats_detected', 0),
+                'dropped_packets': stats.get('dropped_packets', 0),
+                'threat_categories': list(ml_analyzer.block_categories),
+                'query': {
+                    'limit': limit,
+                    'category': category
+                }
+            })
+        else:
+            return jsonify({'error': 'ML analyzer not available'}), 503
+    except Exception as e:
+        logger.error(f"ML threats error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # Error handlers
 @security_bp.errorhandler(404)
 def not_found(error):

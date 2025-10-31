@@ -8,7 +8,9 @@ dpkt==1.9.8
 netifaces==0.11.0
 
 # Phase 1 note: ML dependencies are optional and excluded to improve compatibility
-# For anomaly detection (Phase 3), install extras from requirements-ml.txt
+# For ML-based DPI (Phase 4), install: pip install torch transformers
+# torch>=2.0.0
+# transformers>=4.30.0
 
 # API Framework
 flask==3.0.0

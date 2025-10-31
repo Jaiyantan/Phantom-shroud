@@ -117,6 +117,16 @@
 - ✅ Per-IP network metrics tracking
 - ✅ Comprehensive statistics and suspicious IP reporting
 
+**ML Enhancement (Phase 4)**: ✅ **NEW**
+- ✅ ML-based packet classification with BERT/DistilBERT
+- ✅ 8 threat categories: Backdoor, Bot, DDoS, DoS, Exploits, Shellcode, SQL Injection, XSS
+- ✅ Bidirectional flow tracking for asymmetric attack detection
+- ✅ Async batch inference (16 packets/batch, GPU/CPU auto-detection)
+- ✅ Result caching with 60s TTL for performance
+- ✅ Queue-based processing with overflow protection
+- ✅ Background worker threads for non-blocking analysis
+- ✅ JSONL logging for inference auditing
+
 ### 4. VPN Tunneling (Hours 10-12)
 **MVP Scope**:
 - OpenVPN integration
@@ -168,6 +178,7 @@ Phantom-shroud/
 │   │   │   │   ├── tls.py             # JA3 fingerprinting ✨
 │   │   │   │   ├── http.py
 │   │   │   │   └── dns.py
+│   │   │   ├── ml_analyzer.py         # ML-based packet classification 🧠
 │   │   │   └── manager.py
 │   │   ├── network_inspector.py   # Packet capture
 │   │   ├── dpi_engine.py          # Protocol analysis
@@ -296,6 +307,11 @@ GET  /api/security/anomaly/stats          # Detection statistics
 GET  /api/security/anomaly/suspicious-ips # Flagged IPs
 POST /api/security/anomaly/clear-ip       # Clear flagged IP
 
+GET  /api/security/ml/stats               # ML analyzer statistics 🧠
+GET  /api/security/ml/status              # ML model status 🧠
+GET  /api/security/ml/flows               # Active flow tracking 🧠
+GET  /api/security/ml/threats             # ML-detected threats 🧠
+
 GET  /api/security/health                 # Module health check
 ```
 
@@ -371,19 +387,62 @@ cd Phantom-shroud
 # Backend setup
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
+
+# Optional: Install ML dependencies for BERT-based DPI
+pip install -r backend/requirements-ml.txt
+
+# For GPU acceleration (optional, requires CUDA)
+pip install torch --index-url https://download.pytorch.org/whl/cu118
+
+# Configure ML model (optional)
+export PG_BERT_MODEL="/path/to/custom/bert-model"  # or use default
 
 # Start backend services
+cd backend
 python api/app.py
 
 # Frontend setup (separate terminal)
-cd dashboard
+cd frontend
 npm install
 npm run dev
 
 # Access dashboard
 open http://localhost:5173
 ```
+
+### ML-Based DPI (Optional - Phase 4)
+
+The ML-based packet analyzer provides advanced threat detection using BERT models:
+
+**Features**:
+- 8 threat categories: Backdoor, Bot, DDoS, DoS, Exploits, Shellcode, SQL Injection, XSS
+- Bidirectional flow tracking for asymmetric attack detection
+- Batch inference for performance (16 packets/batch)
+- GPU/CPU auto-detection with fallback
+- Result caching with 60s TTL
+
+**Installation**:
+```bash
+# Install ML packages (~4GB download, requires Python 3.10+)
+pip install -r backend/requirements-ml.txt
+
+# Verify installation
+python -c "import torch, transformers; print('ML packages ready')"
+```
+
+**Without ML packages**: The system gracefully degrades to rule-based detection only.
+
+**Configuration**:
+- Default model: `distilbert-base-uncased` (auto-downloaded on first use)
+- Custom model: Set `PG_BERT_MODEL` environment variable
+- Logs: `backend/logs/ml_inference.jsonl`
+
+**API Endpoints**:
+- `GET /api/security/ml/stats` - Statistics (packets analyzed, threats detected, cache performance)
+- `GET /api/security/ml/status` - Model info and configuration
+- `GET /api/security/ml/flows` - Active bidirectional flow tracking
+- `GET /api/security/ml/threats` - Detected threats with category breakdown
 
 ---
 

@@ -118,6 +118,22 @@ def initialize_modules():
     except Exception as e:
         logger.warning(f"ThreatAnalyzer initialization skipped: {e}")
 
+    # Initialize ML-based DPI Analyzer (Phase 4, non-blocking, optional)
+    try:
+        from core.dpi.ml_analyzer import MLPacketAnalyzer
+        ml_analyzer = MLPacketAnalyzer(
+            model_path=os.environ.get("PG_BERT_MODEL", "distilbert-base-uncased-finetuned-sst-2-english"),
+            batch_size=16,
+            log_dir="logs"
+        )
+        app.config['ML_ANALYZER'] = ml_analyzer
+        if ml_analyzer.enabled:
+            logger.info("ML-based DPI Analyzer initialized successfully")
+        else:
+            logger.warning("ML-based DPI Analyzer in dummy mode (ML packages not installed)")
+    except Exception as e:
+        logger.warning(f"ML-based DPI Analyzer initialization skipped: {e}")
+
     # Initialize Honeypots (best-effort; may need elevated privileges or free ports)
     try:
         honeypot_ssh = Honeypot(port=2222, service='SSH')
