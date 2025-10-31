@@ -99,7 +99,8 @@ def initialize_modules():
     # Initialize Anomaly Detector (non-blocking)
     try:
         anomaly_detector = AnomalyDetector()
-        logger.info("AnomalyDetector initialized")
+        app.config['ANOMALY_DETECTOR'] = anomaly_detector
+        logger.info("AnomalyDetector initialized and exposed via app config")
     except Exception as e:
         logger.warning(f"AnomalyDetector initialization skipped: {e}")
 
@@ -149,6 +150,8 @@ from api.network_routes import network_bp
 app.register_blueprint(network_bp)
 from api.dpi_routes import dpi_bp
 app.register_blueprint(dpi_bp)
+from api.security_routes import security_bp
+app.register_blueprint(security_bp)
 
 # Optionally register legacy/main routes if needed
 try:

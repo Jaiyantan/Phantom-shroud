@@ -1,49 +1,149 @@
 """
 Honeypot Module
-Hours 12-14 Implementation
+Production-ready implementation with attacker tracking.
 
-MVP Scope:
-- Basic honeypot (SSH, HTTP)
-- Connection logging
-- Simple attacker IP tracking
-- Alert generation on interaction
+Original Author: Joseph (honeypots_basic.py)
+Enhanced and integrated: October 31, 2025
+
+Features:
+- HTTP and SSH honeypots
+- Attacker tracking and counting
+- Thread-safe logging
+- Alert callbacks on interaction
 """
 
 import socket
 import threading
 import logging
+import time
 from datetime import datetime
+from typing import Optional, Callable, Dict, List
+from collections import defaultdict
 import json
 
 logger = logging.getLogger(__name__)
 
 
-class Honeypot:
+class AttackerTracker:
     """
-    Basic honeypot for SSH and HTTP services.
-    Simplified for 24-hour MVP.
+    Tracks attacker IPs and connection attempts.
+    Thread-safe implementation for honeypot monitoring.
     """
     
-    def __init__(self, port=22, service='SSH', log_file='data/honeypot_logs.json'):
+    def __init__(self, alert_callback: Optional[Callable] = None):
+        """
+        Initialize Attacker Tracker
+        
+        Args:
+            alert_callback: Function to call on significant events.
+                          Signature: callback(ip: str, count: int, context: dict)
+        """
+        self.ip_counts = {}
+        self.interactions = []
+        self._lock = threading.Lock()
+        self.alert_callback = alert_callback
+        self.alert_thresholds = [1, 5, 10, 20, 50]  # Alert on these counts
+    
+    def record(self, ip: str, context: Dict):
+        """
+        Record an attacker interaction
+        
+        Args:
+            ip: Attacker IP address
+            context: Context information (service, port, data, etc.)
+        """
+        with self._lock:
+            self.ip_counts[ip] = self.ip_counts.get(ip, 0) + 1
+            count = self.ip_counts[ip]
+            
+            interaction = {
+                'ip': ip,
+                'count': count,
+                'timestamp': time.time(),
+                'context': context
+            }
+            self.interactions.append(interaction)
+            
+            # Keep only recent interactions (last 1000)
+            if len(self.interactions) > 1000:
+                self.interactions = self.interactions[-1000:]
+        
+        # Trigger alerts at specific thresholds
+        if count in self.alert_thresholds and self.alert_callback:
+            try:
+                self.alert_callback(ip, count, context)
+            except Exception as e:
+                logger.error(f"Alert callback error: {e}")
+    
+    def get_top_attackers(self, limit: int = 10) -> List[tuple]:
+        """Get top attackers by connection count"""
+        with self._lock:
+            return sorted(
+                self.ip_counts.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:limit]
+    
+    def get_attacker_info(self, ip: str) -> Optional[Dict]:
+        """Get information about a specific attacker"""
+        with self._lock:
+            if ip not in self.ip_counts:
+                return None
+            
+            ip_interactions = [i for i in self.interactions if i['ip'] == ip]
+            return {
+                'ip': ip,
+                'total_attempts': self.ip_counts[ip],
+                'interactions': ip_interactions[-10:]  # Last 10
+            }
+    
+    def get_stats(self) -> Dict:
+        """Get overall statistics"""
+        with self._lock:
+            return {
+                'unique_attackers': len(self.ip_counts),
+                'total_interactions': len(self.interactions),
+                'top_attackers': self.get_top_attackers(5)
+            }
+
+
+class Honeypot:
+    """
+    Production-ready honeypot with HTTP and SSH support.
+    Includes attacker tracking and configurable responses.
+    """
+    
+    def __init__(
+        self,
+        port: int = 22,
+        service: str = 'SSH',
+        log_file: str = 'data/honeypot_logs.json',
+        tracker: Optional[AttackerTracker] = None
+    ):
         """
         Initialize Honeypot
         
         Args:
             port: Port to listen on
-            service: Service type (SSH, HTTP)
+            service: Service type ('SSH' or 'HTTP')
             log_file: Path to log file
+            tracker: AttackerTracker instance (creates new if None)
         """
         self.port = port
-        self.service = service
+        self.service = service.upper()
         self.log_file = log_file
-        self.interactions = []
+        self.tracker = tracker or AttackerTracker()
         self.is_running = False
         self.server_socket = None
+        self._server_thread = None
+        
+        # Realistic banners
         self.banners = {
-            'SSH': 'SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5',
-            'HTTP': 'HTTP/1.1 200 OK\r\nServer: Apache/2.4.41 (Ubuntu)\r\n\r\n'
+            'SSH': b'SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3\r\n',
+            'HTTP': b'HTTP/1.1 200 OK\r\nServer: Apache/2.4.41 (Ubuntu)\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<h1>Welcome</h1>\n<!-- honeypot -->'
         }
-        logger.info(f"Honeypot initialized for {service} on port {port}")
+        
+        logger.info(f"Honeypot initialized: {service} on port {port}")
     
     def start(self):
         """Start honeypot service in background thread"""
