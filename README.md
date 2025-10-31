@@ -7,7 +7,7 @@
 
 ## 🛡️ Overview
 
-**Phantom-shroud** is a security solution designed and built within a **24-hour hackathon** to protect users on public Wi-Fi networks. The system detects insecure networks, monitors for man-in-the-middle (MITM) attacks, and provides automated protection through VPN encryption. Taking inspiration from the **Wii-Secure** project, Phantom-shroud delivers an MVP implementation with core defence mechanisms: network inspection, threat detection, VPN tunneling, deception capabilities, and a real-time monitoring dashboard.
+**Phantom-shroud** is a security solution designed and built within a **24-hour hackathon** to protect users on public Wi-Fi networks. The system detects insecure networks, monitors for man-in-the-middle (MITM) attacks, and provides automated protection through VPN encryption. Phantom-shroud delivers an MVP implementation with core defence mechanisms: network inspection, threat detection, VPN tunneling, deception capabilities, and a real-time monitoring dashboard.
 
 ### Key Capabilities (24-Hour MVP)
 
@@ -148,13 +148,24 @@
 - Threat severity scoring
 - Basic incident timeline
 
-### 7. Admin Dashboard (Hours 16-24)
+### 7. Admin Dashboard (Hours 16-24) ✅ **ENHANCED**
 **MVP Scope**:
 - Real-time network status display
 - Live threat feed
 - VPN control interface
 - Alert notifications
 - Basic statistics and charts
+
+**Phase 5 Enhancement**: ✅ **NEWEST**
+- ✅ **ML Analytics Dashboard**: Comprehensive ML statistics with animated counters
+- ✅ **Threat Visualization**: Interactive Doughnut/Bar charts with Chart.js
+- ✅ **Flow Monitor**: Real-time bidirectional flow tracking with filtering
+- ✅ **ML Status Widget**: Model configuration and GPU/CPU indicators
+- ✅ **Dark Cyber Theme**: Neon-accented color palette with glass morphism
+- ✅ **Smooth Animations**: Fade-in, slide-up, counter animations (GPU-accelerated)
+- ✅ **Tab Navigation**: Overview and ML Analytics views
+- ✅ **Custom React Hooks**: Auto-refreshing API integration
+- ✅ **Graceful Degradation**: Works without ML packages installed
 
 ---
 

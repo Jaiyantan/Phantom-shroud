@@ -8,9 +8,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### In Progress
-- Frontend security dashboard components for ML analytics
+- Real-time WebSocket updates for ML analytics
 - Unit test suite for security modules
 - Performance optimization
+- Mobile responsive enhancements
+
+## [0.5.0] - 2025-10-31
+
+### Added - Phase 5: Frontend ML Analytics Dashboard
+- **MLAnalytics Component**: Comprehensive ML dashboard with real-time statistics (`frontend/src/components/MLAnalytics.jsx`)
+  - Animated stat cards with trend indicators
+  - Performance metrics with progress bars
+  - Cache performance breakdown (hit rate, size, queries)
+  - System status with last update timestamp
+  - Graceful "ML unavailable" state with setup instructions
+- **ThreatChart Component**: Interactive Chart.js visualization (`frontend/src/components/ThreatChart.jsx`)
+  - Doughnut and Bar chart toggle
+  - 8 threat categories with color coding by severity
+  - Threat list with detection counts
+  - Category breakdown legend
+  - Smooth chart animations (1s duration)
+- **FlowMonitor Component**: Real-time bidirectional flow tracking (`frontend/src/components/FlowMonitor.jsx`)
+  - Flow summary cards (active, total, avg duration)
+  - Individual flow cards with expand/collapse
+  - Forward/backward packet indicators
+  - Protocol filtering (TCP/UDP/All)
+  - Sorting by packets/bytes/duration
+- **MLStatus Component**: ML model configuration widget (`frontend/src/components/MLStatus.jsx`)
+  - Availability indicator with animated pulse
+  - GPU/CPU device badge
+  - Expandable model configuration details
+  - Threat category listing
+  - Performance tips and setup guide
+- **Custom ML Hooks**: React hooks for API integration (`frontend/src/utils/mlHooks.js`)
+  - `useMLStats()` - Auto-refreshing ML statistics
+  - `useMLStatus()` - Model configuration
+  - `useMLFlows()` - Active flow tracking
+  - `useMLThreats()` - Threat detection data
+  - `useCountUp()` - Animated number counters
+  - `useFormatBytes()` / `useFormatDuration()` - Data formatting
+- **Enhanced Tailwind Config**: Cybersecurity dark theme (`frontend/tailwind.config.js`)
+  - Cyber color palette (dark, card, border variants)
+  - Neon accent colors (blue, purple, green, red, yellow)
+  - Threat severity colors
+  - Gradient backgrounds (cyber, neon, threat, success)
+  - Neon shadow effects
+  - Custom animations (glow, slide, fade, counter)
+- **Global Style Enhancements**: Custom CSS components (`frontend/src/index.css`)
+  - Themed custom scrollbar
+  - Glass morphism effects
+  - Text glow and gradient text utilities
+  - Card hover animations
+  - Loading spinner
+  - Smooth transitions
+- **App Navigation**: Tab-based navigation system (`frontend/src/App.jsx`)
+  - Overview and ML Analytics tabs
+  - Enhanced header with gradient logo
+  - Status indicator
+  - "NEW" badge on ML Analytics tab
+  - Sticky header with backdrop blur
+
+### Changed
+- App.jsx now supports dual-view navigation (Overview + ML Analytics)
+- Tailwind config extended with 50+ custom utility classes
+- Global styles enhanced with cyber theme components
+- Frontend README updated with comprehensive ML analytics documentation
+
+### Design System
+- **Color Palette**: 
+  - Cyber theme: 6 shades (#0a0e27 to #2a3567)
+  - Neon accents: 8 colors for different states
+  - Threat severity: 5-level color coding
+- **Typography**: Inter font family, Fira Code for monospace
+- **Animations**: 7 custom animations with GPU acceleration
+- **Shadows**: 5 shadow variants including neon glows
+
+### UX Enhancements
+- Staggered entry animations for lists (50ms delay per item)
+- Animated number counters with easing
+- Hover effects on all interactive elements
+- Loading states with themed spinners
+- Error messages with user-friendly instructions
+- Progressive disclosure (expandable sections)
+- Micro-interactions throughout
+
+### Performance
+- Custom hooks with auto-refresh and caching
+- GPU-accelerated CSS animations
+- Lazy loading for Chart.js
+- Conditional rendering for expensive components
+- Optimized re-renders with React hooks
+
+### Documentation
+- Phase 5 completion report (15+ pages)
+- Enhanced frontend README with setup guide
+- Component architecture documentation
+- Design system specification
+
+### Contributors
+- Joseph: Dashboard inspiration from dashboard_streamlit.py
+- Design: Modern React + Tailwind + Chart.js implementation
 
 ## [0.4.0] - 2025-10-31
 

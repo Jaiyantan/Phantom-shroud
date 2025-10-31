@@ -12,6 +12,7 @@ MVP Scope:
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
+from datetime import datetime
 import logging
 import sys
 import os
@@ -118,21 +119,22 @@ def initialize_modules():
     except Exception as e:
         logger.warning(f"ThreatAnalyzer initialization skipped: {e}")
 
-    # Initialize ML-based DPI Analyzer (Phase 4, non-blocking, optional)
+    # Initialize ML-based DPI analyzer (Phase 4)
+    ml_analyzer = None
     try:
-        from core.dpi.ml_analyzer import MLPacketAnalyzer
-        ml_analyzer = MLPacketAnalyzer(
-            model_path=os.environ.get("PG_BERT_MODEL", "distilbert-base-uncased-finetuned-sst-2-english"),
-            batch_size=16,
-            log_dir="logs"
-        )
-        app.config['ML_ANALYZER'] = ml_analyzer
+        from core.ml_dpi_analyzer import MLDPIAnalyzer
+        ml_analyzer = MLDPIAnalyzer()
         if ml_analyzer.enabled:
-            logger.info("ML-based DPI Analyzer initialized successfully")
+            logger.info(f"ML-based DPI enabled on device: {ml_analyzer.device}")
         else:
-            logger.warning("ML-based DPI Analyzer in dummy mode (ML packages not installed)")
+            logger.warning("ML-based DPI initialized but disabled (missing ML packages)")
+    except ImportError as e:
+        logger.warning(f"ML-based DPI not available: {e}")
     except Exception as e:
-        logger.warning(f"ML-based DPI Analyzer initialization skipped: {e}")
+        logger.error(f"Failed to initialize ML-based DPI: {e}")
+    
+    # CRITICAL FIX: Expose ML analyzer to app context for security_routes.py
+    app.config['ML_ANALYZER'] = ml_analyzer
 
     # Initialize Honeypots (best-effort; may need elevated privileges or free ports)
     try:
@@ -214,17 +216,46 @@ def handle_disconnect():
 
 @socketio.on('request_update')
 def handle_update_request():
-    """Handle real-time update request from client"""
+    """
+    Handle client requests for data updates
+    Emits ML stats, threats, and network metrics in real-time
+    """
     try:
-        # Send current status
-        if network_inspector:
-            emit('network_update', network_inspector.get_stats())
+        ml_analyzer = app.config.get('ML_ANALYZER')
+        anomaly_detector = app.config.get('ANOMALY_DETECTOR')
         
-        if threat_analyzer:
-            emit('threat_update', threat_analyzer.get_statistics())
-            
+        # Prepare update payload
+        update_data = {
+            'timestamp': datetime.now().isoformat(),
+            'ml_stats': {},
+            'network_metrics': {},
+            'threat_count': 0
+        }
+        
+        # Get ML analyzer stats if available
+        if ml_analyzer and ml_analyzer.enabled:
+            try:
+                stats = ml_analyzer.get_stats()
+                update_data['ml_stats'] = stats
+                update_data['threat_count'] = stats.get('threats_detected', 0)
+            except Exception as e:
+                logger.error(f"Error getting ML stats: {e}")
+        
+        # Get anomaly detector stats if available
+        if anomaly_detector:
+            try:
+                anomaly_stats = anomaly_detector.get_statistics()
+                update_data['network_metrics'] = anomaly_stats
+            except Exception as e:
+                logger.error(f"Error getting anomaly stats: {e}")
+        
+        # Emit update to requesting client
+        emit('network_update', update_data)
+        logger.debug("Sent real-time update to client")
+        
     except Exception as e:
-        logger.error(f"Update request error: {e}")
+        logger.error(f"Error handling update request: {e}")
+        emit('error', {'message': 'Failed to fetch updates'})
 
 
 if __name__ == '__main__':
