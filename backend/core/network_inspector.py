@@ -53,6 +53,9 @@ class NetworkInspector:
         
         # Protocol statistics
         self.protocol_stats = defaultdict(int)
+
+        # Optional DPI manager (set at runtime)
+        self.dpi_manager = None
         
         # Cleanup thread
         self._cleanup_thread = None
@@ -101,6 +104,13 @@ class NetworkInspector:
                 
                 # Update flow tracker
                 self.flow_tracker.process_packet(parsed)
+                # Send to DPI manager if available (non-blocking)
+                try:
+                    if self.dpi_manager:
+                        # DPIManager.inspect_packet expects a parsed dict
+                        self.dpi_manager.inspect_packet(parsed)
+                except Exception as _e:
+                    logger.debug(f"DPI inspection error: {_e}")
                 
         except Exception as e:
             logger.debug(f"Error processing packet: {e}")
@@ -254,6 +264,11 @@ class NetworkInspector:
         """
         self.capture.set_filter(bpf_filter)
         logger.info(f"Capture filter set: {bpf_filter}")
+
+    def set_dpi_manager(self, dpi_manager):
+        """Attach a DPI manager instance to be called for each parsed packet."""
+        self.dpi_manager = dpi_manager
+        logger.info("DPI manager attached to NetworkInspector")
 
 
 if __name__ == "__main__":

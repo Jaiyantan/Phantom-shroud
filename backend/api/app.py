@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.network_inspector import NetworkInspector
 from core.dpi_engine import DPIEngine
+from core.dpi.manager import DPIManager
 from core.anomaly_detector import AnomalyDetector
 from core.vpn_manager import VPNManager
 from core.honeypot import Honeypot
@@ -44,6 +45,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Initialize core modules
 network_inspector = None
 dpi_engine = None
+dpi_manager = None
 anomaly_detector = None
 vpn_manager = None
 honeypot_ssh = None
@@ -71,6 +73,28 @@ def initialize_modules():
         logger.info("DPIEngine initialized")
     except Exception as e:
         logger.warning(f"DPIEngine initialization skipped: {e}")
+
+    # Initialize a lightweight DPI manager (in-memory rules/inspections)
+    try:
+        dpi_manager = DPIManager()
+        logger.info("DPIManager initialized")
+    except Exception as e:
+        logger.warning(f"DPIManager initialization skipped: {e}")
+
+    # Attach DPI manager to network inspector if available
+    try:
+        if network_inspector and dpi_manager:
+            network_inspector.set_dpi_manager(dpi_manager)
+            logger.info("DPIManager attached to NetworkInspector")
+    except Exception as _e:
+        logger.debug(f"Failed to attach DPI manager: {_e}")
+
+    # Expose DPI manager via app config for blueprints/routes
+    try:
+        if dpi_manager is not None:
+            app.config['DPI_MANAGER'] = dpi_manager
+    except Exception as _e:
+        logger.debug(f"Failed to set DPI_MANAGER in app config: {_e}")
 
     # Initialize Anomaly Detector (non-blocking)
     try:
@@ -123,6 +147,8 @@ def internal_error(error):
 # Register blueprints
 from api.network_routes import network_bp
 app.register_blueprint(network_bp)
+from api.dpi_routes import dpi_bp
+app.register_blueprint(dpi_bp)
 
 # Optionally register legacy/main routes if needed
 try:
